@@ -14,6 +14,8 @@ const campaignsRouter = require("./routes/campaigns");
 const surveysRouter = require("./routes/surveys");
 const usersRouter = require("./routes/users");
 const editRouter = require("./routes/edit");
+const customersRouter = require("./routes/customers");
+const responsesRouter = require("./routes/responses");
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
@@ -34,5 +36,7 @@ app.use("/campaigns", campaignsRouter);
 app.use("/surveys", surveysRouter);
 app.use("/users", usersRouter);
 app.use("/edit", editRouter);
+app.use("/customers", customersRouter);
+app.use("/responses", responsesRouter);
 
 app.listen(5000, () => console.log("✅ Express backend on port 5000"));

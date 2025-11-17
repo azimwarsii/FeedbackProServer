@@ -49,6 +49,81 @@ router.post("/", async (req, res) => {
 	}
 });
 
+// PATCH /surveys/:surveyId
+router.patch("/:surveyId", async (req, res) => {
+	const { surveyId } = req.params;
+	const { userId } = req.query;
+	const { title, description, questions, thankYouMessage, goal, status, responses } = req.body;
+
+	if (!surveyId) {
+		return res.status(400).json({ error: "surveyId parameter is required" });
+	}
+
+	try {
+		const survey = await Survey.findById(surveyId);
+
+		if (!survey) {
+			return res.status(404).json({ error: "Survey not found" });
+		}
+
+		if (userId && survey.user.toString() !== userId) {
+			return res.status(403).json({ error: "You are not authorized to edit this survey" });
+		}
+
+		const updates = {};
+		if (title !== undefined) updates.title = title;
+		if (description !== undefined) updates.description = description;
+		if (questions !== undefined) updates.questions = questions;
+		if (thankYouMessage !== undefined) updates.thankYouMessage = thankYouMessage;
+		if (goal !== undefined) updates.goal = goal;
+		if (status !== undefined) updates.status = status;
+		if (responses !== undefined) updates.responses = responses;
+		if (Object.keys(updates).length === 0) {
+			return res.status(400).json({ error: "Provide at least one field to update" });
+		}
+
+		const updatedSurvey = await Survey.findByIdAndUpdate(
+			surveyId,
+			{ $set: updates },
+			{ new: true }
+		);
+
+		res.status(200).json({ survey: updatedSurvey });
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
+// DELETE /surveys/:surveyId
+router.delete("/:surveyId", async (req, res) => {
+	const { surveyId } = req.params;
+	const { userId } = req.query;
+
+	if (!surveyId) {
+		return res.status(400).json({ error: "surveyId parameter is required" });
+	}
+
+	try {
+		const survey = await Survey.findById(surveyId);
+
+		if (!survey) {
+			return res.status(404).json({ error: "Survey not found" });
+		}
+
+		if (userId && survey.user.toString() !== userId) {
+			return res.status(403).json({ error: "You are not authorized to delete this survey" });
+		}
+
+		await Survey.findByIdAndDelete(surveyId);
+
+		res.status(200).json({ message: "Survey deleted successfully" });
+	} catch (err) {
+		console.error(err);
+		res.status(500).json({ error: "Internal server error" });
+	}
+});
+
 module.exports = router;
 
 
