@@ -53,7 +53,7 @@ router.get("/:campaignId", async (req, res) => {
 
 // POST /campaigns
 router.post("/", async (req, res) => {
-	const { userId, name, description, message_template, contacts, reward, surveyId } = req.body;
+	const { userId, name, description, message_template, contacts, reward, surveyId, externalSurveyLink, code } = req.body;
 	if (!userId || !name) {
 		return res.status(400).json({ error: "userId and name are required" });
 	}
@@ -69,6 +69,29 @@ router.post("/", async (req, res) => {
 			if (!survey) {
 				return res.status(404).json({ error: "Survey not found" });
 			}
+		}
+
+		// Validate external survey link and code
+		if (externalSurveyLink) {
+			// Validate URL format
+			try {
+				new URL(externalSurveyLink);
+			} catch (err) {
+				return res.status(400).json({ error: "externalSurveyLink must be a valid URL" });
+			}
+			
+			// Validate 4-digit code
+			if (!code) {
+				return res.status(400).json({ error: "code is required when externalSurveyLink is provided" });
+			}
+			if (!/^\d{4}$/.test(code)) {
+				return res.status(400).json({ error: "code must be exactly 4 digits" });
+			}
+		}
+
+		// Cannot have both internal survey and external survey link
+		if (surveyId && externalSurveyLink) {
+			return res.status(400).json({ error: "Cannot specify both surveyId and externalSurveyLink. Choose one." });
 		}
 
 		// Validate reward if provided
@@ -91,6 +114,8 @@ router.post("/", async (req, res) => {
 			contacts: contacts || [],
 			reward: reward || undefined,
 			survey: surveyId || undefined,
+			externalSurveyLink: externalSurveyLink || undefined,
+			code: code || undefined,
 			user: user._id
 		});
 		res.status(201).json({ campaign });
@@ -104,7 +129,7 @@ router.post("/", async (req, res) => {
 router.patch("/:campaignId", async (req, res) => {
 	const { campaignId } = req.params;
 	const { userId } = req.query;
-	const { name, description, message_template, contacts, reward, surveyId, status, responses, amount_utilized, codes_utilized } = req.body;
+	const { name, description, message_template, contacts, reward, surveyId, externalSurveyLink, code, status, responses, amount_utilized, codes_utilized } = req.body;
 
 	if (!campaignId) {
 		return res.status(400).json({ error: "campaignId parameter is required" });
@@ -133,6 +158,40 @@ router.patch("/:campaignId", async (req, res) => {
 			}
 		}
 
+		// Validate external survey link and code
+		if (externalSurveyLink !== undefined) {
+			if (externalSurveyLink === null || externalSurveyLink === "") {
+				// Allow clearing the external survey link
+			} else {
+				// Validate URL format
+				try {
+					new URL(externalSurveyLink);
+				} catch (err) {
+					return res.status(400).json({ error: "externalSurveyLink must be a valid URL" });
+				}
+				
+				// Validate 4-digit code if externalSurveyLink is being set
+				if (code !== undefined && !/^\d{4}$/.test(code)) {
+					return res.status(400).json({ error: "code must be exactly 4 digits" });
+				}
+			}
+		}
+
+		// Validate code if provided independently
+		if (code !== undefined && code !== null && code !== "") {
+			if (!/^\d{4}$/.test(code)) {
+				return res.status(400).json({ error: "code must be exactly 4 digits" });
+			}
+		}
+
+		// Check if both surveyId and externalSurveyLink would be set after update
+		const finalSurveyId = surveyId !== undefined ? (surveyId || null) : campaign.survey;
+		const finalExternalLink = externalSurveyLink !== undefined ? (externalSurveyLink || null) : campaign.externalSurveyLink;
+		
+		if (finalSurveyId && finalExternalLink) {
+			return res.status(400).json({ error: "Cannot specify both surveyId and externalSurveyLink. Choose one." });
+		}
+
 		// Validate reward if provided
 		if (reward) {
 			if (!reward.type || !['cash reward', 'promo code'].includes(reward.type)) {
@@ -155,6 +214,12 @@ router.patch("/:campaignId", async (req, res) => {
 		if (status !== undefined) updates.status = status;
 		if (surveyId !== undefined) {
 			updates.survey = surveyId || null;
+		}
+		if (externalSurveyLink !== undefined) {
+			updates.externalSurveyLink = externalSurveyLink || null;
+		}
+		if (code !== undefined) {
+			updates.code = code || null;
 		}
 		if (responses !== undefined) updates.responses = responses;
 		if (amount_utilized !== undefined) updates.amount_utilized = amount_utilized;

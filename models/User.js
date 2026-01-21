@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
 	name: { type: String, immutable: true  },
 	companyName: { type: String },
 	bio: { type: String },
+	walletBalance: { type: Number, default: 0, min: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", UserSchema);

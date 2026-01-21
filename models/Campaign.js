@@ -27,6 +27,8 @@ const CampaignSchema = new mongoose.Schema({
 	contacts: { type: [ContactSchema], default: [] },
 	reward: { type: RewardSchema },
 	survey: { type: mongoose.Schema.Types.ObjectId, ref: "Survey" },
+	externalSurveyLink: { type: String },
+	code: { type: String }, // 4-digit code for external survey
 	status: { type: String, default: "active" },
 	user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 	responses: {type: Number, default: 0},

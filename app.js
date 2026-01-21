@@ -1,6 +1,5 @@
 require('dotenv').config({ path: '.env.local' });
 const express = require('express')
-const port = 5000
 const mongoose = require("mongoose");
 const cors = require("cors");
 
@@ -39,4 +38,4 @@ app.use("/edit", editRouter);
 app.use("/customers", customersRouter);
 app.use("/responses", responsesRouter);
 
-app.listen(5000, () => console.log("✅ Express backend on port 5000"));
+module.exports = app;
