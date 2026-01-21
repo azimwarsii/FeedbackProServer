@@ -1,5 +1,5 @@
 require('dotenv').config({ path: '.env.local' });
-const express = require('express')
+const express = require('express');
 const mongoose = require("mongoose");
 const cors = require("cors");
 
@@ -18,16 +18,16 @@ const responsesRouter = require("./routes/responses");
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
-  console.error('❌ MONGO_URI is not defined in environment variables');
+  console.error('❌ MONGO_URI is not defined');
   process.exit(1);
 }
 
-mongoose.connect(mongoUri).then(() => {
-  console.log('✅ Connected to MongoDB');
-}).catch((err) => {
-  console.error('❌ MongoDB connection error:', err);
-  process.exit(1);
-});
+mongoose.connect(mongoUri)
+  .then(() => console.log('✅ Connected to MongoDB'))
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // Mount routers
 app.use("/auth", authRouter);
@@ -38,4 +38,8 @@ app.use("/edit", editRouter);
 app.use("/customers", customersRouter);
 app.use("/responses", responsesRouter);
 
-module.exports = app;
+// 🔑 REQUIRED FOR RENDER
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
+});
