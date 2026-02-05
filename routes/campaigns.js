@@ -53,7 +53,7 @@ router.get("/:campaignId", async (req, res) => {
 
 // POST /campaigns
 router.post("/", async (req, res) => {
-	const { userId, name, description, message_template, contacts, reward, surveyId, externalSurveyLink, code } = req.body;
+	const { userId, name, description, message_template, contacts, reward, surveyId, externalSurveyLink, code, image } = req.body;
 	if (!userId || !name) {
 		return res.status(400).json({ error: "userId and name are required" });
 	}
@@ -80,11 +80,11 @@ router.post("/", async (req, res) => {
 				return res.status(400).json({ error: "externalSurveyLink must be a valid URL" });
 			}
 			
-			// Validate 4-digit code
+			// Validate 8-digit code
 			if (!code) {
 				return res.status(400).json({ error: "code is required when externalSurveyLink is provided" });
 			}
-			if (!/^\d{4}$/.test(code)) {
+			if (!/^\d{8}$/.test(code)) {
 				return res.status(400).json({ error: "code must be exactly 4 digits" });
 			}
 		}
@@ -116,6 +116,7 @@ router.post("/", async (req, res) => {
 			survey: surveyId || undefined,
 			externalSurveyLink: externalSurveyLink || undefined,
 			code: code || undefined,
+			image: image || undefined,
 			user: user._id
 		});
 		res.status(201).json({ campaign });
@@ -129,7 +130,7 @@ router.post("/", async (req, res) => {
 router.patch("/:campaignId", async (req, res) => {
 	const { campaignId } = req.params;
 	const { userId } = req.query;
-	const { name, description, message_template, contacts, reward, surveyId, externalSurveyLink, code, status, responses, amount_utilized, codes_utilized } = req.body;
+	const { name, description, message_template, contacts, reward, surveyId, externalSurveyLink, code, status, responses, amount_utilized, codes_utilized, image } = req.body;
 
 	if (!campaignId) {
 		return res.status(400).json({ error: "campaignId parameter is required" });
@@ -224,6 +225,7 @@ router.patch("/:campaignId", async (req, res) => {
 		if (responses !== undefined) updates.responses = responses;
 		if (amount_utilized !== undefined) updates.amount_utilized = amount_utilized;
 		if (codes_utilized !== undefined) updates.codes_utilized = codes_utilized;
+		if (image !== undefined) updates.image = image;
 		if (Object.keys(updates).length === 0) {
 			return res.status(400).json({ error: "Provide at least one field to update" });
 		}
