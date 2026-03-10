@@ -42,4 +42,9 @@ app.use("/edit", editRouter);
 app.use("/customers", customersRouter);
 app.use("/responses", responsesRouter);
 
+// 🔑 REQUIRED FOR RENDER
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server listening on port ${PORT}`);
+});
 module.exports = app;
