@@ -2,6 +2,7 @@ const express = require("express");
 const Campaign = require("../models/Campaign");
 const User = require("../models/User");
 const Survey = require("../models/Survey");
+const telnyx = require("telnyx")(process.env.TELNYX_API_KEY);
 
 const router = express.Router();
 
@@ -79,7 +80,7 @@ router.post("/", async (req, res) => {
 			} catch (err) {
 				return res.status(400).json({ error: "externalSurveyLink must be a valid URL" });
 			}
-			
+
 			// Validate 8-digit code
 			if (!code) {
 				return res.status(400).json({ error: "code is required when externalSurveyLink is provided" });
@@ -119,6 +120,25 @@ router.post("/", async (req, res) => {
 			image: image || undefined,
 			user: user._id
 		});
+
+		// Send messages to all contacts via Telnyx
+		if (campaign.contacts && campaign.contacts.length > 0) {
+			for (const contact of campaign.contacts) {
+				if (contact.phone) {
+					try {
+						await telnyx.messages.send({
+							from: process.env.TELNYX_PHONE_NUMBER,
+							to: contact.phone,
+							text: campaign.message_template || `You have been added to a new campaign: ${campaign.name}`
+						});
+						console.log(`Telnyx message sent to ${contact.phone}`);
+					} catch (telnyxErr) {
+						console.error(`Failed to send Telnyx message to ${contact.phone}:`, telnyxErr);
+					}
+				}
+			}
+		}
+
 		res.status(201).json({ campaign });
 	} catch (err) {
 		console.error(err);
@@ -170,7 +190,7 @@ router.patch("/:campaignId", async (req, res) => {
 				} catch (err) {
 					return res.status(400).json({ error: "externalSurveyLink must be a valid URL" });
 				}
-				
+
 				// Validate 4-digit code if externalSurveyLink is being set
 				if (code !== undefined && !/^\d{4}$/.test(code)) {
 					return res.status(400).json({ error: "code must be exactly 4 digits" });
@@ -188,7 +208,7 @@ router.patch("/:campaignId", async (req, res) => {
 		// Check if both surveyId and externalSurveyLink would be set after update
 		const finalSurveyId = surveyId !== undefined ? (surveyId || null) : campaign.survey;
 		const finalExternalLink = externalSurveyLink !== undefined ? (externalSurveyLink || null) : campaign.externalSurveyLink;
-		
+
 		if (finalSurveyId && finalExternalLink) {
 			return res.status(400).json({ error: "Cannot specify both surveyId and externalSurveyLink. Choose one." });
 		}
