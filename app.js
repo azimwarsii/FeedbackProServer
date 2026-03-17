@@ -6,10 +6,17 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 const express = require('express')
 const mongoose = require("mongoose");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: true,
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // Routers
 const authRouter = require("./routes/auth");
@@ -19,6 +26,7 @@ const usersRouter = require("./routes/users");
 const editRouter = require("./routes/edit");
 const customersRouter = require("./routes/customers");
 const responsesRouter = require("./routes/responses");
+const adminRouter = require("./routes/admin");
 
 const mongoUri = process.env.MONGO_URI;
 if (!mongoUri) {
@@ -41,10 +49,6 @@ app.use("/users", usersRouter);
 app.use("/edit", editRouter);
 app.use("/customers", customersRouter);
 app.use("/responses", responsesRouter);
+app.use("/admin", adminRouter);
 
-// 🔑 REQUIRED FOR RENDER
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
-});
 module.exports = app;
