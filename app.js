@@ -51,4 +51,13 @@ app.use("/customers", customersRouter);
 app.use("/responses", responsesRouter);
 app.use("/admin", adminRouter);
 
+// If Render runs `node app.js`, bind a port here.
+// When run via `bin/www`, this module is required and the server is created there instead.
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`🚀 Server listening on port ${PORT}`);
+  });
+}
+
 module.exports = app;
